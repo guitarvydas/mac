@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+textarea {
+}
+</style>
+</head>
+<body>
+
+<h1>Macro Expander</h1>
+
+<p>source:</p>
+<textarea id="src" rows="5" cols="90" placeholder="src" style="background-color:oldlace;">
+signature ž❲Omit Comments❳ {
+  inputs {➢❲text❳}
+  outputs {◦❲text❳}
+}
+
+implementation ž❲Omit Comments❳ leaf {
+  :namedcodeblock ❲c1❳ 
+⟪
+result = re.sub (r'\#.*\n', '\n', message.data)
+self.send (self, 'text', result, message)
+⟫
+  :on ➢❲text❳ ❲c1❳
+}
+</textarea>
+
+
+<p>modified:</p>
+<textarea id="output" rows="7" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;">
+</textarea>
+<br>
+<br>
+<p id="status" > READY </p>
+
+<!-- Ohm-JS -->
+<script src="https://unpkg.com/ohm-js@16/dist/ohm.min.js"></script>
+
+
+<!-- PREP preprocessor -->
+<script src="libprep.js"></script>
+<script src="fmt.js"></script>
+
+
+<br>
+<button onclick="baseline ()">Test</button>
+<script>
+
+const grammar = ohm.grammar(String.raw`
+operands {
+operandPreprocessor = operandChar*
+
+operandChar =
+  | oExplicitInput
+  | oImplicitInput
+  | oExplicitOutput
+  | oImplicitOutput
+  | oFunction
+  | oProcedure
+  | oComponent
+  | oSelf
+  | oVerbatimFunction
+  | oVerbatim
+  | oString
+  | oNumber
+  | anyChar
+
+anyChar = any
+
+name = "❲" nameChar+ "❳"
+nameChar =
+  | ~"❲" ~"❳" any
+
+ComponentName = 
+  | "ž" name
+  | ":component:" name
+
+oExplicitInput = 
+  | "➢" name
+  | ":iport:" name
+
+oImplicitInput = 
+  | "➢" implicitIndicator name -- prefixed
+  | ":implicitiport:" name -- keyword
+
+oExplicitOutput = 
+  | "◦" name 
+  | ":oport:" name
+
+oImplicitOutput = 
+  | "◦" implicitIndicator name -- prefixed
+  | ":implicitoport:" -- keyword
+
+implicitIndicator = "į"
+
+
+oFunction = 
+  | "ė" name
+  | ":function:" name
+
+oProcedure = 
+  | "č" name
+  | ":procedure:" name
+
+oComponent = 
+  | "ž" name
+  | ":component:" name
+
+oSelf = 
+  | "š"
+  | ":self:"
+
+oVerbatim = "⟪" verbatimBody "⟫"
+verbatimBody =
+  | "⟪" verbatimBody "⟫" -- rec
+  | ~"⟪" ~"⟫" any        -- bottom
+oVerbatimFunction = "⟪" verbatimFunctionBody "⟫?"
+verbatimFunctionBody =
+  | "⟪" (verbatimBody | verbatimFunctionBody) "⟫?" -- rec
+  | ~"⟪" ~"⟫" any                                  -- bottom
+
+oString = 
+  | dq notDQ* dq
+  | sq notSQ* sq
+oNumber =
+  | digit+      -- decimal
+  | "0x" hexDigit+     -- hex
+  | "0b" binaryDigit+  -- binary
+
+binaryDigit = "0" .. "1"
+
+dq = "\""
+sq = "'"
+notDQ = escapedChar | (~dq any)
+notSQ = escapedChar | (~sq any)
+escapedChar = backslash any
+backslash = "\\"
+}
+`);
+
+  // I had to escape all '${...}' sequences to appease JS.  I don't know how to fix this...
+  
+  const rewritefmt = String.raw`
+operandPreprocessor [@c] = [[\${c}]]
+
+operandChar [x] = [[\${x}]]
+anyChar [c] = [[\${c}]]
+
+name [lb @cs rb] [[\${lb}\${cs}\${rb}]]
+nameChar [c] = [[\${c}]]
+ComponentName [prefix name] = [[\${prefix}\${name}]]
+oImplicitInput_prefixed [symbol indicator name] = [[\${symbol}\${indicator}\${name}]]
+oImplicitInput_keyword [kw name] = [[\${kw}\${name}]]
+oImplicitOutput_prefixed [symbol indicator name] = [[\${symbol}\${indicator}\${name}]]
+oImplicitOutput_keyword [kw name] = [[\${kw}\${name}]]
+
+implicitIndicator [c] = [[\${c}]]
+oFunction [symbol name] = [[\${symbol}\${name}]] 
+oProcedure [symbol name] = [[\${symbol}\${name}]] 
+oComponent [symbol name] = [[\${symbol}\${name}]] 
+oSelf [symbol] = [[\${symbol}]]
+oVerbatim [lb body rb] = [[\${lb}\${body}\${rb}]]
+verbatimBody_rec [lb body rb] = [[\${lb}\${body}\${rb}]]
+verbatimBody_bottom [c] = [[\${c}]]
+oVerbatimFunction [lb body rb] = [[\${lb}\${body}\${rb}]]
+verbatimFunctionBody_rec [lb body rb] = [[\${lb}\${body}\${rb}]]
+verbatimFunctionBody_bottom [c] = [[\${c}]]
+oString [lq @cs rq] = [[\${lq}\${cs}\${rq}]]
+oNumber_decimal [@ds] = [[\${ds}]]
+oNumber_hex [prefix @ds] = [[\${prefix}\${ds}]]
+oNumber_binary [prefix @ds] = [[\${prefix}\${ds}]]
+binaryDigit [c] = [[\${c}]]
+dq [c] = [[\${c}]]
+sq [c] = [[\${c}]]
+notDQ [c] = [[\${c}]]
+notSQ [c] = [[\${c}]]
+escapedChar [c] = [[\${c}]]
+backslash [c] = [[\${c}]]
+`;
+  
+  function baseline () {
+      let src = document.getElementById('src').value;
+      let matchResult = grammar.match (src);
+      if (matchResult.succeeded ()) {
+          document.getElementById('status').innerHTML = "OK";
+	  const ishtml = true;
+	  var preprocessed = prep (src, grammar, rewritefmt, 1, ishtml);
+     } else {
+          document.getElementById('output').value = grammar.trace (src);
+          document.getElementById('status').innerHTML = "parse FAILED";
+      }
+  }
+
+  </script>
+</body>
+</html>
+
+
