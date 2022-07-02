@@ -13,12 +13,15 @@ function expand1 (src, grammars, grammarname, fmt, fixup) {
     //
     var s = '';
 
+    var generatedObject = {};
+    
 
     // Step 1a. Create (internal) fmt transpiler. 
     var internalgrammar = ohm.grammar (glueGrammar);
     var fmtcst = internalgrammar.match (fmt);
+
     if (fmtcst.failed ()) {
-	return [false, internalgrammar.trace (fmt)];
+	return [false, "FORMAT: syntax error\n(Use Ohm-Editor to debug format specification (grammar: fmt.ohm))\n\n" + internalgrammar.trace (fmt)];
     }
     // Step 1b. Transpile User's FMT spec to a JS object (for use with Ohm-JS)
     try {
@@ -27,7 +30,7 @@ function expand1 (src, grammars, grammarname, fmt, fixup) {
         var generatedFmtWalker = sem (fmtcst);
         var generated = generatedFmtWalker._glue ();
         var generatedFmtCodeString = fixup (generated);
-        var generatedObject = eval('(' + generatedFmtCodeString + ')');
+        generatedObject = eval('(' + generatedFmtCodeString + ')');
     } catch (err) {
         throw "error generating code from FMT specification";
     }
@@ -38,6 +41,8 @@ function expand1 (src, grammars, grammarname, fmt, fixup) {
     } catch (err) {
         return [false, "grammar error - grammar not found"];
     }
+
+    var srccst = {};
     try {
         srccst = grammar.match (src);
     } catch (err) {
@@ -50,12 +55,12 @@ function expand1 (src, grammars, grammarname, fmt, fixup) {
 
     // Step 2b. Apply fmt rewrite rules to src.
     try {
-        srcsem = grammar.createSemantics ();
+        var srcsem = grammar.createSemantics ();
         srcsem.addOperation ('_glue', generatedObject);
         var srctreewalker = srcsem (srccst);
         s = srctreewalker._glue ();
     } catch (err) {
-        return [false, "failed to transpile src"];
+        return [false, "failed to transpile src" + '\n' + err.message];
     }
     
     return [true, s];
@@ -243,5 +248,9 @@ function _ruleExit (ruleName) {
         process.stderr.write (ruleName); 
         process.stderr.write ("\n");
     }
+}
+
+function getGlueGrammar () {
+    return glueGrammar;
 }
 
