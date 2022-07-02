@@ -11,10 +11,10 @@ textarea {
 <h1>Macro Expander</h1>
 
 <p>source:</p>
-<textarea id="src" rows="5" cols="90" placeholder="src" style="background-color:oldlace;">a</textarea>
+<textarea id="src" rows="5" cols="90" placeholder="src" style="background-color:oldlace;">aaa</textarea>
 
 
-<p>modified:</p>
+<p>output:</p>
 <textarea id="output" rows="7" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;">
 </textarea>
 <br>
@@ -35,22 +35,26 @@ textarea {
 
 const grammars = String.raw`
 Test {
-rule = "a"
+rule = "a"+
 }
 `;
 
   const rewritefmt = String.raw`
-rule [c] = [[~{c}]]
+rule [@cs] = [[~{cs}]]
 `;
   
   function baseline () {
       let src = document.getElementById('src').value;
-      let matchResult = expand1 (src, grammars, 'Test', rewritefmt);
-      if (matchResult.succeeded ()) {
-          document.getElementById('status').innerHTML = "OK";
-	  var preprocessed = expand1 (src, grammar, rewritefmt);
-     } else {
-          document.getElementById('output').value = grammar.trace (src);
+      try {
+          let [success, expanded] = expand1 (src, grammars, 'Test', rewritefmt);
+          document.getElementById('output').value = expanded;
+;
+          if (success) {
+              document.getElementById('status').innerHTML = "OK";
+          } else {
+              document.getElementById('status').innerHTML = "FAILED";
+          }
+      } catch (err) {
           document.getElementById('status').innerHTML = "parse FAILED";
       }
   }

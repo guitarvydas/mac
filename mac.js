@@ -2,9 +2,9 @@ function expand1 (src, grammars, grammarname, fmt) {
     // expand the string src given the grammar+fmt specifications
     // grammar is the pattern(s) to be matched, fmt is how the matches
     //  are glued together to make a new string
-    // throw "syntax error" if pattern match fails
+    // return [false, trace] if pattern match fails
     // throw "internal error" if re-formatting (gluing) results in an error
-    // throw "grammar error" if named grammar not found
+    // return [false, "grammar error"] if named grammar not found
     // grammars is a string containing one or more grammars in Ohm-JS format
     // grammarname is a string which is the name of one of the grammars
     var s = '';
@@ -14,14 +14,14 @@ function expand1 (src, grammars, grammarname, fmt) {
     var internalgrammar = ohm.grammar (glueGrammar);
     var fmtcst = internalgrammar.match (fmt);
     if (fmtcst.failed ()) {
-        throw "syntax error in fmt spec";
+	return [false, internalgrammar.trace (fmt)];
     }
     // Step 1b. Transpile User's FMT spec to a JS object (for use with Ohm-JS)
     try {
         var sem = internalgrammar.createSemantics ();
         sem.addOperation ('_glue', glueSemantics);
         var generatedFmtWalker = sem (fmtcst);
-        var generatedFmtCodeString = generatedFmtWalker._glue ();
+        var generatedFmtCodeString = generatedFmtWalker._glue ().replace ('~{', '${');
         var generatedObject = eval('(' + generatedFmtCodeString + ')');
     } catch (err) {
         throw "error generating code from FMT specification";
@@ -31,17 +31,16 @@ function expand1 (src, grammars, grammarname, fmt) {
     try {
         var grammar = ohm.grammars (grammars) [grammarname];
     } catch (err) {
-        throw "grammar error";
+        return [false, "grammar error - grammar not found"];
     }
     try {
         srccst = grammar.match (src);
     } catch (err) {
-        console.error (`given grammar = ${grammarname}`);
-        throw "syntax error in source string (using given grammar)";
+	return [false, grammar.trace (src)];
     }
 
     if (srccst.failed ()) {
-        throw "syntax error in source string";
+	return [false, grammar.trace (src)];
     }
 
     // Step 2b. Apply fmt rewrite rules to src.
@@ -51,10 +50,10 @@ function expand1 (src, grammars, grammarname, fmt) {
         var srctreewalker = srcsem (srccst);
         s = srctreewalker._glue ();
     } catch (err) {
-        throw "failed to transpile src";
+        return [false, "failed to transpile src"];
     }
     
-    return s;
+    return [true, s];
 }
 
 
