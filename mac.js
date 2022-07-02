@@ -13,6 +13,7 @@ function expand1 (src, givengrammar, fmt, fixup) {
     var s = '';
 
     var generatedObject = {};
+    var generatedFmtCodeString = '';
     
 
     // Step 1a. Create (internal) fmt transpiler. 
@@ -28,7 +29,7 @@ function expand1 (src, givengrammar, fmt, fixup) {
         sem.addOperation ('_glue', glueSemantics);
         var generatedFmtWalker = sem (fmtcst);
         var generated = generatedFmtWalker._glue ();
-        var generatedFmtCodeString = fixup (generated);
+        generatedFmtCodeString = fixup (generated);
         generatedObject = eval('(' + generatedFmtCodeString + ')');
     } catch (err) {
         throw "error generating code from FMT specification";
@@ -38,18 +39,18 @@ function expand1 (src, givengrammar, fmt, fixup) {
     try {
         var grammar = ohm.grammar (givengrammar);
     } catch (err) {
-        return [false, "grammar error - " + err.message];
+        return [false, "grammar error - " + err.message, 'xxx'];
     }
 
     var srccst = {};
     try {
         srccst = grammar.match (src);
     } catch (err) {
-        return [false, err.messsage + "\n" + grammar.trace (src)];
+        return [false, err.messsage + "\n" + grammar.trace (src), 'xxx'];
     }
 
     if (srccst.failed ()) {
-        return [false, srccst.message + "\n" + grammar.trace (src)];
+        return [false, srccst.message + "\n" + grammar.trace (src), 'xxx'];
     }
 
     // Step 2b. Apply fmt rewrite rules to src.
@@ -59,10 +60,10 @@ function expand1 (src, givengrammar, fmt, fixup) {
         var srctreewalker = srcsem (srccst);
         s = srctreewalker._glue ();
     } catch (err) {
-        return [false, "failed to transpile src" + '\n' + err.message];
+        return [false, "failed to transpile src" + '\n' + err.message, 'xxx'];
     }
     
-    return [true, s];
+    return [true, s, 'const semanticsObject =' + generatedFmtCodeString + ';'];
 }
 
 

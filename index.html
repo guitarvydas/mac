@@ -8,10 +8,18 @@ textarea {
 </head>
 <body>
 
-<h1>Macro Expander</h1>
+<h1>Macro Expander (1 Level)</h1>
 
 <p>source:</p>
-<textarea id="src" rows="5" cols="90" placeholder="src" style="background-color:oldlace;">a b c ONE x y z TWO p q r</textarea>
+<textarea id="src" rows="5" cols="90" placeholder="src" style="background-color:oldlace;">
+CONST cache TO ARR ZERO SEP ONE END
+FN fibonacci num DO
+  IF cache OF length GT num DO
+    RETURN cache OF at CALL num END
+  END
+  RETURN fibonacci CALL num SUB ONE END ADD fibonacci CALL sum SUB TWO END
+END
+</textarea>
 
 
 <p>output:</p>
@@ -27,7 +35,7 @@ textarea {
 <br>
 <hr>
 <p>detailed layer...</p>
-<p>macro grammar and re-formatter:</p>
+<p>macro grammar and re-formatter and generated JavaScript semantics (for Ohm-JS):</p>
 <textarea id="macrogrammar" rows="13" cols="40" placeholder="macro grammar" style="background-color:oldlace;">
 NumbersAsWords {
 main = 
@@ -47,6 +55,9 @@ num_one [word lookahead] = [[1]]
 num_two [word lookahead] = [[2]]
 separator [x] = [[~{x}]]
 stuff [c] = [[${c}]]
+</textarea>
+</textarea>
+<textarea id="semjs" rows="13" cols="40" placeholder="generated JS semantics" style="background-color:whitesmoke;">
 </textarea>
 
 <!-- Ohm-JS -->
@@ -69,15 +80,16 @@ stuff [c] = [[${c}]]
       try {
           var grammar = document.getElementById('macrogrammar').value;
           var fmt = document.getElementById('macrofmt').value;
-          let [success, expanded] = expand1 (src, grammar, fmt, fixup);
+          let [success, expanded, jssemantics] = expand1 (src, grammar, fmt, fixup);
           document.getElementById('output').value = expanded;
           if (success) {
-              document.getElementById('status').innerHTML = "OK " + Date ();
+              document.getElementById('status').value = "OK " + Date ();
+              document.getElementById('semjs').value = jssemantics;
           } else {
-              document.getElementById('status').innerHTML = "FAILED " + Date ();
+              document.getElementById('status').value = "FAILED " + Date ();
           }
       } catch (err) {
-          document.getElementById('status').innerHTML = "parse FAILED: " + err.message + Date ();
+          document.getElementById('status').value = "parse FAILED: " + err.message + Date ();
       }
   }
 
