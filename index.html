@@ -11,7 +11,7 @@ textarea {
 <h1>Macro Expander</h1>
 
 <p>source:</p>
-<textarea id="src" rows="5" cols="90" placeholder="src" style="background-color:oldlace;">b</textarea>
+<textarea id="src" rows="5" cols="90" placeholder="src" style="background-color:oldlace;">b ONE</textarea>
 
 
 <p>output:</p>
@@ -31,20 +31,22 @@ textarea {
 <textarea id="macrogrammar" rows="13" cols="40" placeholder="macro grammar" style="background-color:oldlace;">
 NumbersAsWords {
 main = 
-  | num main? -- rec
-  | stuff*         -- bottom
+  | num main?    -- withnum
+  | stuff+ main? -- withoutnum
 num = 
-  | "ONE" &separator
-  | "TWO" &separator
+  | "ONE" &separator -- one
+  | "TWO" &separator -- two
 separator = space | end
 stuff = ~num any
 }
 </textarea>
 <textarea id="macrofmt" rows="13" cols="40" placeholder="macro fmt" style="background-color:oldlace;">
-main_rec [num @more] = [[~{num}~{more}]]
-main_bottom [@stuff] = [[~{stuff}]]
-num [word lookahead] = [[~{word}]]
+main_withnum [num @more] = [[~{num}~{more}]]
+main_withoutnum [@stuff @more] = [[~{stuff}~{more}]]
+num_one [word lookahead] = [[1]]
+num_two [word lookahead] = [[2]]
 separator [x] = [[~{x}]]
+stuff [c] = [[${c}]]
 </textarea>
 
 <!-- Ohm-JS -->

@@ -45,11 +45,11 @@ function expand1 (src, givengrammar, fmt, fixup) {
     try {
         srccst = grammar.match (src);
     } catch (err) {
-        return [false, grammar.trace (src)];
+        return [false, err.messsage + "\n" + grammar.trace (src)];
     }
 
     if (srccst.failed ()) {
-        return [false, grammar.trace (src)];
+        return [false, srccst.message + "\n" + grammar.trace (src)];
     }
 
     // Step 2b. Apply fmt rewrite rules to src.
