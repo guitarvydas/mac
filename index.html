@@ -35,20 +35,26 @@ textarea {
 
 const grammars = String.raw`
 Test {
-rule = "a"+
+rule = a+
+a = "a"
 }
 `;
 
   const rewritefmt = String.raw`
 rule [@cs] = [[~{cs}]]
+a [c] = [[~{c}]]
 `;
   
+  function fixup (s) {
+      return s
+	  .replace (/~{/g, '${');
+  }
+
   function baseline () {
       let src = document.getElementById('src').value;
       try {
-          let [success, expanded] = expand1 (src, grammars, 'Test', rewritefmt);
+          let [success, expanded] = expand1 (src, grammars, 'Test', rewritefmt, fixup);
           document.getElementById('output').value = expanded;
-;
           if (success) {
               document.getElementById('status').innerHTML = "OK";
           } else {

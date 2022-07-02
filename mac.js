@@ -1,4 +1,4 @@
-function expand1 (src, grammars, grammarname, fmt) {
+function expand1 (src, grammars, grammarname, fmt, fixup) {
     // expand the string src given the grammar+fmt specifications
     // grammar is the pattern(s) to be matched, fmt is how the matches
     //  are glued together to make a new string
@@ -7,6 +7,10 @@ function expand1 (src, grammars, grammarname, fmt) {
     // return [false, "grammar error"] if named grammar not found
     // grammars is a string containing one or more grammars in Ohm-JS format
     // grammarname is a string which is the name of one of the grammars
+    //
+    // fixup is a function which is applied to the generated code before
+    // the code is evaled
+    //
     var s = '';
 
 
@@ -21,7 +25,8 @@ function expand1 (src, grammars, grammarname, fmt) {
         var sem = internalgrammar.createSemantics ();
         sem.addOperation ('_glue', glueSemantics);
         var generatedFmtWalker = sem (fmtcst);
-        var generatedFmtCodeString = generatedFmtWalker._glue ().replace ('~{', '${');
+        var generated = generatedFmtWalker._glue ();
+        var generatedFmtCodeString = fixup (generated);
         var generatedObject = eval('(' + generatedFmtCodeString + ')');
     } catch (err) {
         throw "error generating code from FMT specification";
