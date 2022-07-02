@@ -26,18 +26,18 @@ textarea {
 <br>
 <br>
 <hr>
-<p>only if debugging FORMAT errors ...</p>
-<p>for debugging FORMAT errors (1) FORMAT grammar:</p>
-<textarea id="fmtgrammar" rows="2" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;">
-</textarea>
-<br>
-<p>for debugging FORMAT errors (2) FORMAT specification:</p>
-<textarea id="fmtspec" rows="2" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;">
-</textarea>
-<br>
+<!-- <p>only if debugging FORMAT errors ...</p> -->
+<!-- <p>for debugging FORMAT errors (1) FORMAT grammar:</p> -->
+<!-- <textarea id="fmtgrammar" rows="2" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;"> -->
+<!-- </textarea> -->
+<!-- <br> -->
+<!-- <p>for debugging FORMAT errors (2) FORMAT specification:</p> -->
+<!-- <textarea id="fmtspec" rows="2" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;"> -->
+<!-- </textarea> -->
+<!-- <br> -->
 
-<p>To debug FORMAT errors, copy/paste (1) into Ohm-editor grammar window and copy/paste (2) into Ohm-editor examples.
-<br>
+<!-- <p>To debug FORMAT errors, copy/paste (1) into Ohm-editor grammar window and copy/paste (2) into Ohm-editor examples. -->
+<!-- <br> -->
 
 <!-- Ohm-JS -->
 <script src="https://unpkg.com/ohm-js@16/dist/ohm.min.js"></script>
@@ -194,8 +194,7 @@ backslash [c] = [[~{c}]]
 
   function baseline () {
       let src = document.getElementById('src').value;
-      document.getElementById('fmtgrammar').innerHTML = getGlueGrammar ();
-      document.getElementById('fmtspec').innerHTML = rewritefmt;
+      // for debugging fmt specifications, see ../fmt shorthand transpiler
       try {
           let [success, expanded] = expand1 (src, grammars, 'Operands', rewritefmt, fixup);
           document.getElementById('output').value = expanded;
@@ -205,7 +204,7 @@ backslash [c] = [[~{c}]]
               document.getElementById('status').innerHTML = "FAILED";
           }
       } catch (err) {
-          document.getElementById('status').innerHTML = "parse FAILED";
+          document.getElementById('status').innerHTML = "parse FAILED: " + err.message;
       }
   }
 
