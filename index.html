@@ -26,18 +26,26 @@ textarea {
 <br>
 <br>
 <hr>
-<!-- <p>only if debugging FORMAT errors ...</p> -->
-<!-- <p>for debugging FORMAT errors (1) FORMAT grammar:</p> -->
-<!-- <textarea id="fmtgrammar" rows="2" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;"> -->
-<!-- </textarea> -->
-<!-- <br> -->
-<!-- <p>for debugging FORMAT errors (2) FORMAT specification:</p> -->
-<!-- <textarea id="fmtspec" rows="2" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;"> -->
-<!-- </textarea> -->
-<!-- <br> -->
-
-<!-- <p>To debug FORMAT errors, copy/paste (1) into Ohm-editor grammar window and copy/paste (2) into Ohm-editor examples. -->
-<!-- <br> -->
+<p>detailed layer...</p>
+<p>macro grammar and re-formatter:</p>
+<textarea id="macrogrammar" rows="13" cols="40" placeholder="macro grammar" style="background-color:oldlace;">
+NumbersAsWords {
+main = 
+  | num main? -- rec
+  | stuff*         -- bottom
+num = 
+  | "ONE" &separator
+  | "TWO" &separator
+separator = space | end
+stuff = ~num any
+}
+</textarea>
+<textarea id="macrofmt" rows="13" cols="40" placeholder="macro fmt" style="background-color:oldlace;">
+main_rec [num @more] = [[~{num}~{more}]]
+main_bottom [@stuff] = [[~{stuff}]]
+num [word lookahead] = [[~{word}]]
+separator [x] = [[~{x}]]
+</textarea>
 
 <!-- Ohm-JS -->
 <script src="https://unpkg.com/ohm-js@16/dist/ohm.min.js"></script>
@@ -48,163 +56,26 @@ textarea {
 
 
 <script>
-
-
-  
-const grammars = String.raw`
-Operands {
-operandPreprocessor = operandChar*
-
-operandChar =
-  | oExplicitInput
-  | oImplicitInput
-  | oExplicitOutput
-  | oImplicitOutput
-  | oFunction
-  | oProcedure
-  | oComponent
-  | oSelf
-  | oVerbatimFunction
-  | oVerbatim
-  | oString
-  | oNumber
-  | anyChar
-
-anyChar = any
-
-name = "❲" nameChar+ "❳"
-nameChar =
-  | ~"❲" ~"❳" any
-
-ComponentName = 
-  | "ž" name
-  | ":component:" name
-
-oExplicitInput = 
-  | "➢" name
-  | ":iport:" name
-
-oImplicitInput = 
-  | "➢" implicitIndicator name -- prefixed
-  | ":implicitiport:" name -- keyword
-
-oExplicitOutput = 
-  | "◦" name 
-  | ":oport:" name
-
-oImplicitOutput = 
-  | "◦" implicitIndicator name -- prefixed
-  | ":implicitoport:" name -- keyword
-
-implicitIndicator = "į"
-
-
-oFunction = 
-  | "ė" name
-  | ":function:" name
-
-oProcedure = 
-  | "č" name
-  | ":procedure:" name
-
-oComponent = 
-  | "ž" name
-  | ":component:" name
-
-oSelf = 
-  | "š"
-  | ":self:"
-
-oVerbatim = "⟪" verbatimBody "⟫"
-verbatimBody =
-  | "⟪" verbatimBody "⟫" -- rec
-  | ~"⟪" ~"⟫" any        -- bottom
-oVerbatimFunction = "⟪" verbatimFunctionBody "⟫?"
-verbatimFunctionBody =
-  | "⟪" (verbatimBody | verbatimFunctionBody) "⟫?" -- rec
-  | ~"⟪" ~"⟫" any                                  -- bottom
-
-oString = 
-  | dq notDQ* dq
-  | sq notSQ* sq
-oNumber =
-  | digit+      -- decimal
-  | "0x" hexDigit+     -- hex
-  | "0b" binaryDigit+  -- binary
-
-binaryDigit = "0" .. "1"
-
-dq = "\""
-sq = "'"
-notDQ = escapedChar | (~dq any)
-notSQ = escapedChar | (~sq any)
-escapedChar = backslash any
-backslash = "\\"
-}
-
-`;
-
-  const rewritefmt = String.raw`
-operandPreprocessor [@c] = [[~{c}]]
-
-operandChar [x] = [[~{x}]]
-anyChar [c] = [[~{c}]]
-
-name [lb @cs rb] = [[~{lb}~{cs}~{rb}]]
-nameChar [c] = [[~{c}]]
-ComponentName [prefix name] = [[~{prefix}~{name}]]
-oImplicitInput_prefixed [symbol indicator name] = [[~{symbol}~{indicator}~{name}]]
-oImplicitInput_keyword [kw name] = [[~{kw}~{name}]]
-oImplicitOutput_prefixed [symbol indicator name] = [[~{symbol}~{indicator}~{name}]]
-oImplicitOutput_keyword [kw name] = [[~{kw}~{name}]]
-
-implicitIndicator [c] = [[~{c}]]
-oFunction [symbol name] = [[~{symbol}~{name}]] 
-oProcedure [symbol name] = [[~{symbol}~{name}]] 
-oComponent [symbol name] = [[~{symbol}~{name}]] 
-oSelf [symbol] = [[~{symbol}]]
-oVerbatim [lb body rb] = [[~{lb}~{body}~{rb}]]
-verbatimBody_rec [lb body rb] = [[~{lb}~{body}~{rb}]]
-verbatimBody_bottom [c] = [[~{c}]]
-oVerbatimFunction [lb body rb] = [[~{lb}~{body}~{rb}]]
-verbatimFunctionBody_rec [lb body rb] = [[~{lb}~{body}~{rb}]]
-verbatimFunctionBody_bottom [c] = [[~{c}]]
-oString [lq @cs rq] = [[~{lq}~{cs}~{rq}]]
-oNumber_decimal [@ds] = [[~{ds}]]
-oNumber_hex [prefix @ds] = [[~{prefix}~{ds}]]
-oNumber_binary [prefix @ds] = [[~{prefix}~{ds}]]
-binaryDigit [c] = [[~{c}]]
-dq [c] = [[~{c}]]
-sq [c] = [[~{c}]]
-notDQ [c] = [[~{c}]]
-notSQ [c] = [[~{c}]]
-escapedChar [backslash c] = [[~{backslash}~{c}]]
-backslash [c] = [[~{c}]]
-
-
-`;
-
-
-
-  
   function fixup (s) {
       return s
-	  .replace (/~{/g, '${');
+          .replace (/~{/g, '${');
   }
 
   function baseline () {
       let src = document.getElementById('src').value;
       // for debugging fmt specifications, see ../fmt shorthand transpiler
       try {
-          let [success, expanded] = expand1 (src, grammars, 'Operands', rewritefmt, fixup);
+          var grammar = document.getElementById('macrogrammar').value;
+          var fmt = document.getElementById('macrofmt').value;
+          let [success, expanded] = expand1 (src, grammar, fmt, fixup);
           document.getElementById('output').value = expanded;
           if (success) {
-              document.getElementById('status').innerHTML = "OK";
+              document.getElementById('status').innerHTML = "OK " + Date ();
           } else {
-              document.getElementById('status').innerHTML = "FAILED";
+              document.getElementById('status').innerHTML = "FAILED " + Date ();
           }
       } catch (err) {
-          document.getElementById('status').innerHTML = "parse FAILED: " + err.message;
+          document.getElementById('status').innerHTML = "parse FAILED: " + err.message + Date ();
       }
   }
 

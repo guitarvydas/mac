@@ -1,12 +1,11 @@
-function expand1 (src, grammars, grammarname, fmt, fixup) {
+function expand1 (src, givengrammar, fmt, fixup) {
     // expand the string src given the grammar+fmt specifications
     // grammar is the pattern(s) to be matched, fmt is how the matches
     //  are glued together to make a new string
     // return [false, trace] if pattern match fails
     // throw "internal error" if re-formatting (gluing) results in an error
     // return [false, "grammar error"] if named grammar not found
-    // grammars is a string containing one or more grammars in Ohm-JS format
-    // grammarname is a string which is the name of one of the grammars
+    // grammar is a string containing exactly one in Ohm-JS format
     //
     // fixup is a function which is applied to the generated code before
     // the code is evaled
@@ -21,7 +20,7 @@ function expand1 (src, grammars, grammarname, fmt, fixup) {
     var fmtcst = internalgrammar.match (fmt);
 
     if (fmtcst.failed ()) {
-	return [false, "FORMAT: syntax error\n(Use Ohm-Editor to debug format specification (grammar: fmt.ohm))\n\n" + internalgrammar.trace (fmt)];
+        return [false, "FORMAT: syntax error\n(Use fmt shorthand transpiler to debug format specification)\n\n" + internalgrammar.trace (fmt)];
     }
     // Step 1b. Transpile User's FMT spec to a JS object (for use with Ohm-JS)
     try {
@@ -37,20 +36,20 @@ function expand1 (src, grammars, grammarname, fmt, fixup) {
 
     // Step 2a. Use Ohm-JS to pattern-match user's src string.
     try {
-        var grammar = ohm.grammars (grammars) [grammarname];
+        var grammar = ohm.grammar (givengrammar);
     } catch (err) {
-        return [false, "grammar error - grammar not found"];
+        return [false, "grammar error - " + err.message];
     }
 
     var srccst = {};
     try {
         srccst = grammar.match (src);
     } catch (err) {
-	return [false, grammar.trace (src)];
+        return [false, grammar.trace (src)];
     }
 
     if (srccst.failed ()) {
-	return [false, grammar.trace (src)];
+        return [false, grammar.trace (src)];
     }
 
     // Step 2b. Apply fmt rewrite rules to src.
