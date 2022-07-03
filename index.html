@@ -11,7 +11,7 @@ textarea {
 <h1>Macro Expander (1 Level)</h1>
 
 <p>source:</p>
-<textarea id="src" rows="5" cols="90" placeholder="src" style="background-color:oldlace;">
+<textarea id="src" rows="7" cols="90" placeholder="src" style="background-color:oldlace;">
 CONST cache TO ARR ZERO SEP ONE END
 FN fibonacci num DO
   IF cache OF length GT num DO
@@ -37,24 +37,55 @@ END
 <p>detailed layer...</p>
 <p>macro grammar and re-formatter and generated JavaScript semantics (for Ohm-JS):</p>
 <textarea id="macrogrammar" rows="13" cols="40" placeholder="macro grammar" style="background-color:oldlace;">
-NumbersAsWords {
+Keywords {
 main = 
-  | num main?    -- withnum
+  | keyword main?    -- withnum
   | stuff+ main? -- withoutnum
-num = 
+keyword = 
+  | "RETURN" &separator -- return
+  | "CONST" &separator -- const
+  | "ZERO" &separator -- zero
+  | "CALL" &separator -- call
+  | "ARR" &separator -- arr
+  | "END" &separator -- end
   | "ONE" &separator -- one
   | "TWO" &separator -- two
+  | "SEP" &separator -- sep
+  | "SUB" &separator -- sub
+  | "ADD" &separator -- add
+  | "TO" &separator -- to
+  | "GT" &separator -- gt
+  | "DO" &separator -- do
+  | "IF" &separator -- if
+  | "OF" &separator -- of
+  | "FN" &separator -- fn
+
 separator = space | end
-stuff = ~num any
+stuff = ~keyword any
 }
 </textarea>
 <textarea id="macrofmt" rows="13" cols="40" placeholder="macro fmt" style="background-color:oldlace;">
 main_withnum [num @more] = [[~{num}~{more}]]
 main_withoutnum [@stuff @more] = [[~{stuff}~{more}]]
-num_one [word lookahead] = [[1]]
-num_two [word lookahead] = [[2]]
+keyword_zero [word lookahead] = [[0]]
+keyword_one [word lookahead] = [[1]]
+keyword_two [word lookahead] = [[2]]
+keyword_sep [word lookahead] = [[,]]
+keyword_gt [word lookahead] = [[>]]
+keyword_const [word lookahead] = [[:const]]
+keyword_to [word lookahead] = [[:to]]
+keyword_arr [word lookahead] = [[:arr]]
+keyword_end [word lookahead] = [[:end]]
+keyword_do [word lookahead] = [[:do]]
+keyword_if [word lookahead] = [[:if]]
+keyword_return [word lookahead] = [[:return]]
+keyword_of [word lookahead] = [[:of]]
+keyword_fn [word lookahead] = [[:fn]]
+keyword_call [word lookahead] = [[:call]]
+keyword_sub [word lookahead] = [[:sub]]
+keyword_add [word lookahead] = [[:add]]
 separator [x] = [[~{x}]]
-stuff [c] = [[${c}]]
+stuff [c] = [[~{c}]]
 </textarea>
 </textarea>
 <textarea id="semjs" rows="13" cols="40" placeholder="generated JS semantics" style="background-color:whitesmoke;">
