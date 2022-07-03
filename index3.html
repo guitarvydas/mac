@@ -8,7 +8,7 @@ textarea {
 </head>
 <body>
 
-<h1>Source To Source Optimizer - Replace Array Accesses</h1>
+<h1>Transpiler - NL to JavaScript </h1>
 
 <p>source:</p>
 <textarea id="src" rows="7" cols="90" placeholder="src" style="background-color:oldlace;">
@@ -23,7 +23,7 @@ textarea {
 
 
 <p>output:</p>
-<textarea id="output" rows="7" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;">
+<textarea id="output" rows="10" cols="90" placeholder="transpiled"  readonly style="background-color:whitesmoke;">
 </textarea>
 <br>
 <br>
@@ -38,13 +38,6 @@ textarea {
 <p>macro grammar and re-formatter and generated JavaScript semantics (for Ohm-JS):</p>
 <textarea id="macrogrammar" rows="13" cols="40" placeholder="macro grammar" style="background-color:oldlace;">
 NLLang {
-top = macro*
-macro =
-  | applySyntactic<ArrayAccess>
-  | any
-
-ArrayAccess = AtExpression
-  
 TopLevel = (ConstDeclaration | FunctionDeclaration)+
 ConstDeclaration = ":const" ident ":to" Expression
 FunctionDeclaration = ":fn" ident Formals Block
@@ -65,9 +58,9 @@ AtExpression =
   | "at" Operator Expression -- operation
   | "at" ":call" Expression* ":end" -- functioncall
 Operator =
-  | ":sub"
-  | ":add"
-  | ">"
+  | ":sub" -- subtract
+  | ":add" -- add
+  | ">"    -- gt
 
 Phrase =
   | IfPhrase
@@ -86,37 +79,30 @@ identRest = digit | identFirst
 
 </textarea>
 <textarea id="macrofmt" rows="13" cols="40" placeholder="macro fmt" style="background-color:oldlace;">
-top [@x] = [[~{x}]]
-macro [x] = [[~{x}]]
-
-ArrayAccess [x] = [[ \[x\] ]]
-
-TopLevel [x] = [[${x}]]
-ConstDeclaration [kconst ident kto expression] = [[~{kconst} ~{ident} ~{kto} ~{expression}]]
-FunctionDeclaration [kfn ident Formals Block] = [[~{kfn} ~{ident} ~{Formals} ~{Block}]]
+TopLevel [@x] = [[${x}]]
+ConstDeclaration [kconst ident kto expression] = [[\nconst ~{ident} = ~{expression};]]
+FunctionDeclaration [kfn ident Formals Block] = [[\nfunction ~{ident} (~{Formals}) {~{Block}\n}]]
 
 Formals [@ident] = [[~{ident}]]
 
 Primary_number [@digits] = [[~{digits}]]
-Primary_arrayliteral [karr Expressions kend] = [[~{karr} ~{Expressions} ~{kend}]]
+Primary_arrayliteral [karr Expressions kend] = [[\[~{Expressions}\] ]]
 
-Expression_fieldaccess [e1 op e2] = [[~{e1} ~{op} ~{e2}]]
+Expression_fieldaccess [e1 op e2] = [[~{e1}.~{e2}]]
 Expression_operation [e1 op e2] = [[~{e1} ~{op} ~{e2}]]
-Expression_functioncall [e1 kcall @Formals kend] = [[~{e1} ~{kcall} ~{Formals} ~{kend}]]
+Expression_functioncall [e1 kcall @Actuals kend] = [[~{e1} (~{Actuals})]]
 Expression_primary [Primary] = [[~{Primary}]]
 
-AtExpression_fieldaccess [e1 op e2] = [[~{e1} ~{op} ~{e2}]]
-AtExpression_operation [e1 op e2] = [[~{e1} ~{op} ~{e2}]]
-AtExpression_functioncall [e1 kcall @Formals kend] = [[~{e1} ~{kcall} ~{Formals} ~{kend}]]
-
-Operator [k] = [[~{k}]]
+Operator_subtract [k] = [[-]]
+Operator_add [k] = [[+]]
+Operator_gt [k] = [[ > ]]
 
 Phrase [x] = [[~{x}]]
 
-IfPhrase [kif Expression Block] = [[~{kif} ~{Expression} ~{Block}]]
-ReturnPhrase [kreturn Expression] = [[~{kreturn} ~{Expression}]]
+IfPhrase [kif Expression Block] = [[\nif (~{Expression}) {~{Block}\n}]]
+ReturnPhrase [kreturn Expression] = [[\nreturn ~{Expression};]]
 
-Block [kdo @Phrase kend] = [[~{kdo} ~{Phrase} ~{kend}]]
+Block [kdo @Phrase kend] = [[~{Phrase}]]
 
 FieldName [ident] = [[~{ident}]]
 
