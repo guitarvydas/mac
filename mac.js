@@ -30,9 +30,10 @@ function expand1 (src, givengrammar, fmt, fixup) {
         var generatedFmtWalker = sem (fmtcst);
         var generated = generatedFmtWalker._glue ();
         generatedFmtCodeString = fixup (generated);
-        generatedObject = eval('(' + generatedFmtCodeString + ')');
+        var evalstring = '(' + generatedFmtCodeString + ')'	
+        generatedObject = eval(evalstring);
     } catch (err) {
-        throw "error generating code from FMT specification";
+        return [false, `error generating code from FMT specification evaling...\n\n${evalstring}`];
     }
 
     // Step 2a. Use Ohm-JS to pattern-match user's src string.

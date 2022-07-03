@@ -85,7 +85,7 @@ keyword_call [word lookahead] = [[:call]]
 keyword_sub [word lookahead] = [[:sub]]
 keyword_add [word lookahead] = [[:add]]
 separator [x] = [[~{x}]]
-stuff [c] = [[${c}]]
+stuff [c] = [[~{c}]]
 </textarea>
 </textarea>
 <textarea id="semjs" rows="13" cols="40" placeholder="generated JS semantics" style="background-color:whitesmoke;">
