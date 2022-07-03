@@ -40,8 +40,11 @@ textarea {
 NLLang {
 top = macro*
 macro =
+  | applySyntactic<ArrayAccess>
   | any
 
+ArrayAccess = AtExpression
+  
 TopLevel = (ConstDeclaration | FunctionDeclaration)+
 ConstDeclaration = ":const" ident ":to" Expression
 FunctionDeclaration = ":fn" ident Formals Block
@@ -57,6 +60,10 @@ Expression =
   | Expression Operator Expression -- operation
   | Expression ":call" Expression* ":end" -- functioncall
   | Primary -- primary
+AtExpression =
+  | "at" ":of" Expression    -- fieldaccess
+  | "at" Operator Expression -- operation
+  | "at" ":call" Expression* ":end" -- functioncall
 Operator =
   | ":sub"
   | ":add"
@@ -79,8 +86,10 @@ identRest = digit | identFirst
 
 </textarea>
 <textarea id="macrofmt" rows="13" cols="40" placeholder="macro fmt" style="background-color:oldlace;">
-top [@x] = [[${x}]]
-macro [x] = [[${x}]]
+top [@x] = [[~{x}]]
+macro [x] = [[~{x}]]
+
+ArrayAccess [x] = [[ \[x\] ]]
 
 TopLevel [x] = [[${x}]]
 ConstDeclaration [kconst ident kto expression] = [[~{kconst} ~{ident} ~{kto} ~{expression}]]
@@ -95,6 +104,10 @@ Expression_fieldaccess [e1 op e2] = [[~{e1} ~{op} ~{e2}]]
 Expression_operation [e1 op e2] = [[~{e1} ~{op} ~{e2}]]
 Expression_functioncall [e1 kcall @Formals kend] = [[~{e1} ~{kcall} ~{Formals} ~{kend}]]
 Expression_primary [Primary] = [[~{Primary}]]
+
+AtExpression_fieldaccess [e1 op e2] = [[~{e1} ~{op} ~{e2}]]
+AtExpression_operation [e1 op e2] = [[~{e1} ~{op} ~{e2}]]
+AtExpression_functioncall [e1 kcall @Formals kend] = [[~{e1} ~{kcall} ~{Formals} ~{kend}]]
 
 Operator [k] = [[~{k}]]
 
