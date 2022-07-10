@@ -1,4 +1,21 @@
-function expand1 (src, givengrammar, fmt, fixup) {
+exports.transpile1 = function (src, grammar, fmt, message) {
+    var success = false;
+    var transpiled = '';
+    var jssemantics = '';
+    try {
+        [success, transpiled, jssemantics] = expand1 (src, grammar, fmt, fixup);
+    } catch (err) {
+        success = false;
+    }
+    return [success, transpiled, jssemantics];
+}
+
+function fixup (s) {
+    return s
+        .replace (/~{/g, '${');
+}
+
+function expand1 (src, givengrammar, fmt, grammarname) {
     // expand the string src given the grammar+fmt specifications
     // grammar is the pattern(s) to be matched, fmt is how the matches
     //  are glued together to make a new string
@@ -6,9 +23,6 @@ function expand1 (src, givengrammar, fmt, fixup) {
     // throw "internal error" if re-formatting (gluing) results in an error
     // return [false, "grammar error"] if named grammar not found
     // grammar is a string containing exactly one in Ohm-JS format
-    //
-    // fixup is a function which is applied to the generated code before
-    // the code is evaled
     //
     var s = '';
 
@@ -37,8 +51,14 @@ function expand1 (src, givengrammar, fmt, fixup) {
     }
 
     // Step 2a. Use Ohm-JS to pattern-match user's src string.
+    var grammar;
     try {
-        var grammar = ohm.grammar (givengrammar);
+	if (grammarname) {
+            var grammars = ohm.grammars (givengrammar);
+	    grammar = grammars [grammarname];
+	} else {    
+            grammar = ohm.grammar (givengrammar);
+	}
     } catch (err) {
         return [false, "grammar error - " + err.message, 'xxx'];
     }
