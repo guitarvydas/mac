@@ -1,4 +1,21 @@
-function expand1 (src, givengrammar, fmt, fixup) {
+function transpile1 (src, grammar, fmt, grammarname, message) {
+    var success = false;
+    var transpiled = '';
+    var jssemantics = '';
+    try {
+        [success, transpiled, jssemantics] = expand1 (src, grammar, fmt, grammarname);
+    } catch (err) {
+        success = false;
+    }
+    return [success, transpiled, jssemantics];
+}
+
+function fixup (s) {
+    return s
+        .replace (/~{/g, '${');
+}
+
+function expand1 (src, givengrammar, fmt, grammarname) {
     // expand the string src given the grammar+fmt specifications
     // grammar is the pattern(s) to be matched, fmt is how the matches
     //  are glued together to make a new string
@@ -6,9 +23,6 @@ function expand1 (src, givengrammar, fmt, fixup) {
     // throw "internal error" if re-formatting (gluing) results in an error
     // return [false, "grammar error"] if named grammar not found
     // grammar is a string containing exactly one in Ohm-JS format
-    //
-    // fixup is a function which is applied to the generated code before
-    // the code is evaled
     //
     var s = '';
 
@@ -37,8 +51,18 @@ function expand1 (src, givengrammar, fmt, fixup) {
     }
 
     // Step 2a. Use Ohm-JS to pattern-match user's src string.
+    var grammar;
     try {
-        var grammar = ohm.grammar (givengrammar);
+	if (grammarname) {
+            var grammars = ohm.grammars (givengrammar);
+	    grammar = grammars [grammarname];
+	    if (grammar) {
+	    } else {
+		return [false, `bad grammar name ${grammarname}`, '---'];
+	    }
+	} else {    
+            grammar = ohm.grammar (givengrammar);
+	}
     } catch (err) {
         return [false, "grammar error - " + err.message, 'xxx'];
     }
@@ -192,7 +216,6 @@ return _result;
         if (0 === code.length) {
             return `${__2}${__3}`;
         } else {
-            process.stderr.write ('code is NOT empty\n');
             throw "code in rw1 NIY";
             return `${code}${__3}`;
         }
@@ -222,32 +245,27 @@ function _ruleInit () {
 
 function traceSpaces () {
     var n = traceDepth;
+    var r = '';
     while (n > 0) {
-        process.stderr.write (" ");
+	r += ' ';
         n -= 1;
     }
-    process.stderr.write ('[');
-    process.stderr.write (traceDepth.toString ());
-    process.stderr.write (']');
+    r = `[${traceDepth.toString ()}]${r}`;
+    return r;
 }
 
 function _ruleEnter (ruleName) {
     if (tracing) {
         traceDepth += 1;
-        traceSpaces ();
-        process.stderr.write("enter: ");
-        process.stderr.write (ruleName.toString ());
-        process.stderr.write ("\n");
+        console.log(`${traceSpaces ()}enter: ${ruleName.toString ()}`);
     }
 }
 
 function _ruleExit (ruleName) {
     if (tracing) {
-        traceSpaces ();
+	var spcs = traceSpaces ();
         traceDepth -= 1;
-        process.stderr.write("exit: "); 
-        process.stderr.write (ruleName); 
-        process.stderr.write ("\n");
+        console.log (`${traceSpaces ()}exit: ${ruleName}`); 
     }
 }
 
