@@ -1,9 +1,9 @@
-exports.transpile1 = function (src, grammar, fmt, message) {
+function transpile1 (src, grammar, fmt, grammarname, message) {
     var success = false;
     var transpiled = '';
     var jssemantics = '';
     try {
-        [success, transpiled, jssemantics] = expand1 (src, grammar, fmt, fixup);
+        [success, transpiled, jssemantics] = expand1 (src, grammar, fmt, grammarname);
     } catch (err) {
         success = false;
     }
@@ -56,6 +56,10 @@ function expand1 (src, givengrammar, fmt, grammarname) {
 	if (grammarname) {
             var grammars = ohm.grammars (givengrammar);
 	    grammar = grammars [grammarname];
+	    if (grammar) {
+	    } else {
+		return [false, `bad grammar name ${grammarname}`, '---'];
+	    }
 	} else {    
             grammar = ohm.grammar (givengrammar);
 	}
@@ -212,7 +216,6 @@ return _result;
         if (0 === code.length) {
             return `${__2}${__3}`;
         } else {
-            process.stderr.write ('code is NOT empty\n');
             throw "code in rw1 NIY";
             return `${code}${__3}`;
         }
@@ -242,32 +245,27 @@ function _ruleInit () {
 
 function traceSpaces () {
     var n = traceDepth;
+    var r = '';
     while (n > 0) {
-        process.stderr.write (" ");
+	r += ' ';
         n -= 1;
     }
-    process.stderr.write ('[');
-    process.stderr.write (traceDepth.toString ());
-    process.stderr.write (']');
+    r = `[${traceDepth.toString ()}]${r}`;
+    return r;
 }
 
 function _ruleEnter (ruleName) {
     if (tracing) {
         traceDepth += 1;
-        traceSpaces ();
-        process.stderr.write("enter: ");
-        process.stderr.write (ruleName.toString ());
-        process.stderr.write ("\n");
+        console.log(`${traceSpaces ()}enter: ${ruleName.toString ()}`);
     }
 }
 
 function _ruleExit (ruleName) {
     if (tracing) {
-        traceSpaces ();
+	var spcs = traceSpaces ();
         traceDepth -= 1;
-        process.stderr.write("exit: "); 
-        process.stderr.write (ruleName); 
-        process.stderr.write ("\n");
+        console.log (`${traceSpaces ()}exit: ${ruleName}`); 
     }
 }
 
